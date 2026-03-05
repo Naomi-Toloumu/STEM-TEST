@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>System Report Dashboard</title>
+  <script src="dataTable.js" defer></script>
+  <script src="parse.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .left-panel, .right-panel {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    select, button {
+      padding: 8px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .stat-box {
+      background: #e8e8e8;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>System Report Dashboard</h1>
+
+  <div class="container">
+
+    <div class="left-panel">
+      <h2>Select Report</h2>
+
+      <!-- Optional: keep file input if user wants to load another CSV -->
+      <input type="file" id="file" accept=".csv">
+
+      <select id="reportSelect">
+        <option value="battery">Battery Report (Currently the only working one)</option>
+        <option value="altimeter">Altimeter Report</option>
+        <option value="gps">GPS Report</option>
+        <option value="imu">IMU Report</option>
+        <option value="motor">Motor Report</option>
+        <option value="pressure">Pressure Report</option>
+        <option value="temperature">Temperature Report</option>
+        <option value="power">Power Report</option>
+        <option value="thruster">Thruster Report</option>
+      </select>
+
+      <button onclick="generateReport()">Generate Report</button>
+
+      <h3>Graph</h3>
+      <canvas id="graph" width="500" height="300"></canvas>
+    </div>
+
+    <div class="right-panel">
+      <h2 id="reportTitle">Report Output</h2>
+      <div id="stats"></div>
+    </div>
+
+  </div>
+
+<script>
+// ---------------------------------------------CALCULATOR--------------------------------------------- 
+function calculateStats(values) {
+  const numeric = values
+    .map(v => parseFloat(v))
+    .filter(v =>
+      !isNaN(v) &&
+      v !== 0 &&
+      v !== -999 &&
+      v !== -99.999 &&
+      v !== -999.99
+    ); 
+
+  if (numeric.length === 0) return null;
+
+  const sum = numeric.reduce((a, b) => a + b, 0);
+  const avg = sum / numeric.length;
+  const min = Math.min(...numeric);
+  const max = Math.max(...numeric);
+
+  if (min === max) return null;
+
+  return { avg, min, max }; 
+}
+
+// ---------------------------------------------REPORT GENERATOR--------------------------------------------- 
+async function generateReport() {
+  const reportSelect = document.getElementById("reportSelect");
+  const selectedReport = reportSelect.value;
+
+  // If generate report is hit and nothing is uploaded, default to selected option from dropdown (only works for battery so far)
+  if (selectedReport === "battery" && !window.currentDataTable) {
+    const fileName = 'ElectCellVoltagesFullsansDuplicates.csv';
+    try {
+      const response = await fetch(fileName);
+      if (!response.ok) throw new Error('CSV file not found');
+      const csvText = await response.text();
+
+      if (typeof toDataTable === 'function') {
+        window.currentDataTable = toDataTable(csvText, fileName);
+      } else {
+        console.error('toDataTable function not found. Make sure parse.js is loaded.');
+        const statsDiv = document.getElementById("stats");
+        statsDiv.innerHTML = "<div class='stat-box'>Parsing function missing. Please check parse.js.</div>";
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to load CSV:', err);
+      const statsDiv = document.getElementById("stats");
+      statsDiv.innerHTML = "<div class='stat-box'>Failed to load Battery CSV. Please upload manually.</div>";
+      return;
+    }
+  }
+
+  const dt = window.currentDataTable;
+  const statsDiv = document.getElementById("stats");
+  const title = document.getElementById("reportTitle");
+  const canvas = document.getElementById("graph");
+  const ctx = canvas.getContext("2d");
+
+  statsDiv.innerHTML = "";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!dt || !dt.headers || dt.headers.length === 0) {
+    title.innerText = "No Data Loaded";
+    statsDiv.innerHTML = "<div class='stat-box'>Please upload a CSV first.</div>";
+    return;
+  }
+
+  title.innerText = "Dynamic Report: " + (dt.meta?.sourceFileName || "");
+
+  const numericColumns = [];
+
+  dt.headers.forEach((header, index) => {
+    if (index === 0 || index === 1 || index === 2) return;
+
+    const values = dt.rows.map(row => row[header]);
+    const stats = calculateStats(values);
+    if (stats) {
+      numericColumns.push({ header, stats });
+    }
+  });
+
+  if (numericColumns.length === 0) {
+    statsDiv.innerHTML = "<div class='stat-box'>No numeric columns detected.</div>";
+    return;
+  }
+
+  let x = 60;
+  const barWidth = 40;
+  const scaleFactor = 50;
+
+  numericColumns.forEach(col => {
+    const { header, stats } = col;
+    const avgFixed = stats.avg.toFixed(2);
+
+    const box = document.createElement("div");
+    box.className = "stat-box";
+    box.innerHTML = `<strong>${header}</strong><br>
+                     Average: ${avgFixed}<br>
+                     Min: ${stats.min}<br>
+                     Max: ${stats.max}`;
+    statsDiv.appendChild(box);
+
+    const barHeight = stats.avg * scaleFactor;
+
+    ctx.fillStyle = "gray";
+    ctx.fillRect(x, canvas.height - barHeight - 40, barWidth, barHeight);
+
+    ctx.fillStyle = "black";
+    ctx.fillText(avgFixed, x, canvas.height - barHeight - 45);
+    ctx.fillText(header, x, canvas.height - 10);
+
+    x += 90;
+  });
+}
+
+// ---------------------------------------- OPTIONAL FILE UPLOAD ----------------------------------------
+document.getElementById('file').addEventListener('change', event => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (typeof toDataTable === 'function') {
+      window.currentDataTable = toDataTable(e.target.result, file.name);
+      generateReport();
+    }
+  };
+  reader.readAsText(file);
+});
+</script>
+
+</body>
+</html>
