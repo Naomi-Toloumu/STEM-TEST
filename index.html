@@ -117,6 +117,19 @@ async function generateReport() {
   const reportSelect = document.getElementById("reportSelect");
   const selectedReport = reportSelect.value;
 
+// change START
+  const padding = {
+    left: 60,
+    right: 20,
+    top: 20,
+    bottom: 60
+  };
+
+  const graphWidth = canvas.width - padding.left - passing.right;
+  const graphHeight = canvas.height - passing.top - passing.bottom;
+
+// change END
+
   // If generate report is hit and nothing is uploaded, default to selected option from dropdown (only works for battery so far)
   if (selectedReport === "battery" && !window.currentDataTable) {
     const fileName = 'ElectCellVoltagesFullsansDuplicates.csv';
