@@ -117,19 +117,6 @@ async function generateReport() {
   const reportSelect = document.getElementById("reportSelect");
   const selectedReport = reportSelect.value;
 
-// change START
-  const padding = {
-    left: 60,
-    right: 20,
-    top: 20,
-    bottom: 60
-  };
-
-  const graphWidth = canvas.width - padding.left - passing.right;
-  const graphHeight = canvas.height - passing.top - passing.bottom;
-
-// change END
-
   // If generate report is hit and nothing is uploaded, default to selected option from dropdown (only works for battery so far)
   if (selectedReport === "battery" && !window.currentDataTable) {
     const fileName = 'ElectCellVoltagesFullsansDuplicates.csv';
@@ -187,6 +174,24 @@ async function generateReport() {
     statsDiv.innerHTML = "<div class='stat-box'>No numeric columns detected.</div>";
     return;
   }
+
+  // CHANGE START
+  const padding = {
+    left: 20,
+    right: 20,
+    top: 20,
+    bottom: 20
+  };
+
+  const graphWidth = canvas.width - passing.left - padding.right;
+  const graphHeight = canvas.height - padding.top - padding.bottom
+
+  const maxAvg = Math.max(...numericColumns.map(c => c.stats.avg));
+
+  ctx.textAlign = "center";
+  ctx.font = "12px Arial";
+
+  // CHANGE END
 
   let x = 60;
   const barWidth = 40;
