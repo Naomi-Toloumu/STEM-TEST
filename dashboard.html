@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>System Report Dashboard</title>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("from") !== "home") {
+      window.location.href = "home.html";
+    }
+  </script>
+
   <script src="dataTable.js" defer></script>
   <script src="parse.js" defer></script>
   <style>
