@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .home-container {
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background-color: dodgerblue;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0b78e3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="home-container">
+    <h1>System Report Dashboard</h1>
+    <p>Analyze and visualize your CSV data</p>
+    <button onclick="startApp()">Start</button>
+  </div>
+
+  <script>
+    function startApp() {
+      window.location.href = "dashboard.html";
+    }
+  </script>
+
+</body>
+</html>
