@@ -301,4 +301,48 @@ document.getElementById('file').addEventListener('change', event => {
 </script>
 
 </body>
+
+<script>
+  // This will draw the default hardcoded graph on page load
+  window.addEventListener("load", drawDefaultGraph);
+
+  function drawDefaultGraph() {
+    const canvas = document.getElementById("graph");
+    if (!canvas) return; // Safety check
+    const ctx = canvas.getContext("2d");
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Example hardcoded data
+    const labels = ["A", "B", "C", "D"];
+    const values = [3, 7, 5, 9];
+
+    let x = 60;
+    const barWidth = 40;
+    const scaleFactor = 20;
+
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+
+    values.forEach((value, i) => {
+      const barHeight = value * scaleFactor;
+
+      // Bar
+      ctx.fillStyle = "#4facfe";
+      ctx.fillRect(x, canvas.height - barHeight - 40, barWidth, barHeight);
+
+      // Value text
+      ctx.fillStyle = "white";
+      ctx.fillText(value, x + barWidth / 2, canvas.height - barHeight - 45);
+
+      // Label
+      ctx.fillText(labels[i], x + barWidth / 2, canvas.height - 10);
+
+      x += 80;
+    });
+  }
+</script>
+
 </html>
