@@ -303,46 +303,112 @@ document.getElementById('file').addEventListener('change', event => {
 </body>
 
 <script>
-  // This will draw the default hardcoded graph on page load
   window.addEventListener("load", drawDefaultGraph);
-
+  
   function drawDefaultGraph() {
     const canvas = document.getElementById("graph");
-    if (!canvas) return; // Safety check
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
-
+  
+    // Example: generate LOTS of data (for testing)
+    const numPoints = 50; // simulate large dataset
+    const labels = Array.from({length: numPoints}, (_, i) => "Item " + (i+1));
+    const values = Array.from({length: numPoints}, () => Math.floor(Math.random() * 20) + 1);
+  
+    const padding = { top: 50, right: 30, bottom: 70, left: 60 };
+    const graphWidth = canvas.width - padding.left - padding.right;
+    const graphHeight = canvas.height - padding.top - padding.bottom;
+  
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Example hardcoded data
-    const labels = ["A", "B", "C", "D"];
-    const values = [3, 7, 5, 9];
-
-    let x = 60;
-    const barWidth = 40;
-    const scaleFactor = 20;
-
-    ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-
-    values.forEach((value, i) => {
-      const barHeight = value * scaleFactor;
-
+  
+    // Max value for scaling
+    const maxValue = Math.max(...values);
+  
+    // Draw grid lines (optional, 5 steps)
+    ctx.strokeStyle = "rgba(255,255,255,0.1)";
+    ctx.lineWidth = 1;
+    const numYSteps = 5;
+    for (let i = 0; i <= numYSteps; i++) {
+      const yVal = (i / numYSteps) * maxValue;
+      const yPos = canvas.height - padding.bottom - (yVal / maxValue) * graphHeight;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, yPos);
+      ctx.lineTo(canvas.width - padding.right, yPos);
+      ctx.stroke();
+  
+      // Y-axis labels
+      ctx.fillStyle = "white";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(yVal.toFixed(0), padding.left - 5, yPos + 4);
+    }
+  
+    // Compute bar width dynamically based on data count
+    const barSpacing = 10;
+    const barWidth = Math.max((graphWidth - (labels.length - 1) * barSpacing) / labels.length, 3);
+  
+    // Draw bars
+    labels.forEach((label, i) => {
+      const x = padding.left + i * (barWidth + barSpacing);
+      const barHeight = (values[i] / maxValue) * graphHeight;
+  
       // Bar
       ctx.fillStyle = "#4facfe";
-      ctx.fillRect(x, canvas.height - barHeight - 40, barWidth, barHeight);
-
-      // Value text
+      ctx.fillRect(x, canvas.height - padding.bottom - barHeight, barWidth, barHeight);
+  
+      // Value on top
+      if (barWidth > 15) { // don't write value if bars are too thin
+        ctx.fillStyle = "white";
+        ctx.font = "10px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(values[i], x + barWidth / 2, canvas.height - padding.bottom - barHeight - 2);
+      }
+  
+      // X-axis labels (rotate if needed)
+      ctx.save();
+      ctx.translate(x + barWidth / 2, canvas.height - padding.bottom + 5);
+      ctx.rotate(-Math.PI / 4); // 45-degree rotation
       ctx.fillStyle = "white";
-      ctx.fillText(value, x + barWidth / 2, canvas.height - barHeight - 45);
-
-      // Label
-      ctx.fillText(labels[i], x + barWidth / 2, canvas.height - 10);
-
-      x += 80;
+      ctx.font = "10px Arial";
+      ctx.textAlign = "right";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
     });
+  
+    // Draw axes
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    // Y-axis
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top);
+    ctx.lineTo(padding.left, canvas.height - padding.bottom);
+    ctx.stroke();
+    // X-axis
+    ctx.beginPath();
+    ctx.moveTo(padding.left, canvas.height - padding.bottom);
+    ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
+    ctx.stroke();
+  
+    // Graph title
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial bold";
+    ctx.textAlign = "center";
+    ctx.fillText("Large Dataset Graph", canvas.width / 2, padding.top / 2);
+  
+    // Y-axis label
+    ctx.save();
+    ctx.translate(padding.left - 40, canvas.height / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.fillText("Value", 0, 0);
+    ctx.restore();
+  
+    // X-axis label
+    ctx.fillStyle = "white";
+    ctx.font = "14px Arial";
+    ctx.fillText("Items", canvas.width / 2, canvas.height - 10);
   }
-</script>
+  </script>
 
 </html>
